@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    background: #eeeeee;
+    color: #292929;
+}
+
+header {
+    background: #a90000;
+    color: white;
+    padding: 22px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+}
+
+nav {
+    background: #292929;
+    padding: 14px;
+    color: white;
+    text-align: center;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 25px auto;
+    padding: 15px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.stat {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 5px solid #b00000;
+    text-align: center;
+}
+
+.stat h2 {
+    color: #b00000;
+    margin: 5px;
+}
+
+.reports {
+    margin-top: 25px;
+}
+
+.report {
+    background: white;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    border-left: 5px solid #b00000;
+}
+
+.report h3 {
+    margin-top: 0;
+    color: #a90000;
+}
+
+select, button {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    margin: 5px 5px 5px 0;
+}
+
+select {
+    background: #eeeeee;
+}
+
+button {
+    background: #b00000;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #850000;
+}
+
+.delete {
+    background: #444444;
+}
+
+.empty {
+    background: white;
+    padding: 25px;
+    text-align: center;
+    border-radius: 10px;
+}
+
+@media(max-width: 600px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>ADMIN DASHBOARD</h1>
+    <p>School Cleanliness and Sanitation Monitoring System</p>
+</header>
+
+<nav>
+    Administrator Panel
+</nav>
+
+<div class="container">
+
+    <div class="stats">
+        <div class="stat">
+            <p>Total Reports</p>
+            <h2 id="total">0</h2>
+        </div>
+
+        <div class="stat">
+            <p>Pending</p>
+            <h2 id="pending">0</h2>
+        </div>
+
+        <div class="stat">
+            <p>Resolved</p>
+            <h2 id="resolved">0</h2>
+        </div>
+    </div>
+
+    <section class="reports">
+        <h2>Submitted Reports</h2>
+        <div id="reportList"></div>
+    </section>
+
+</div>
+
+<script>
+/*
+  DEMO ONLY:
+  This reads reports saved in the SAME browser.
+  It does not automatically receive reports from
+  another device or a separate browser.
+*/
+
+let reports = JSON.parse(
+    localStorage.getItem("schoolReports") || "[]"
+);
+
+function saveReports() {
+    localStorage.setItem(
+        "schoolReports",
+        JSON.stringify(reports)
+    );
+}
+
+function updateDashboard() {
+    document.getElementById("total").textContent =
+        reports.length;
+
+    document.getElementById("pending").textContent =
+        reports.filter(r => r.status === "Pending").length;
+
+    document.getElementById("resolved").textContent =
+        reports.filter(r => r.status === "Resolved").length;
+
+    const list = document.getElementById("reportList");
+    list.innerHTML = "";
+
+    if (reports.length === 0) {
+        list.innerHTML =
+            '<div class="empty">No reports submitted yet.</div>';
+        return;
+    }
+
+    reports.forEach((report, index) => {
+        const card = document.createElement("div");
+        card.className = "report";
+
+        const title = document.createElement("h3");
+        title.textContent = report.issue || "Reported Issue";
+
+        const details = document.createElement("p");
+        details.textContent =
+            "Name: " + (report.name || "Not provided") +
+            " | Grade: " + (report.grade || "Not provided");
+
+        const location = document.createElement("p");
+        location.textContent =
+            "Location: " + (report.location || "Not provided") +
+            " - " + (report.specificLocation || "");
+
+        const description = document.createElement("p");
+        description.textContent =
+            "Description: " + (report.description || "No description");
+
+        const statusLabel = document.createElement("p");
+        statusLabel.textContent =
+            "Status: " + (report.status || "Pending");
+
+        const status = document.createElement("select");
+
+        ["Pending", "In Progress", "Resolved"].forEach(value => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            status.appendChild(option);
+        });
+
+        status.value = report.status || "Pending";
+
+        status.addEventListener("change", () => {
+            reports[index].status = status.value;
+            saveReports();
+            updateDashboard();
+        });
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete";
+        deleteButton.textContent = "Delete Report";
+
+        deleteButton.addEventListener("click", () => {
+            if (confirm("Delete this report?")) {
+                reports.splice(index, 1);
+                saveReports();
+                updateDashboard();
+            }
+        });
+
+        card.append(
+            title, details, location, description,
+            statusLabel, status, deleteButton
+        );
+
+        list.appendChild(card);
+    });
+}
+
+updateDashboard();
+</script>
+
+</body>
+</html>
